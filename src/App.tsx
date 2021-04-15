@@ -4,11 +4,14 @@ import { Cards } from "./Components/Cards";
 import GpsFixedIcon from "@material-ui/icons/GpsFixed";
 import FavoriteBorderIcon from "@material-ui/icons/FavoriteBorder";
 import FavoriteIcon from "@material-ui/icons/Favorite";
+import { makeStyles } from "@material-ui/core/styles";
+import Modal from "@material-ui/core/Modal";
+import Backdrop from "@material-ui/core/Backdrop";
+import Fade from "@material-ui/core/Fade";
 import {
   fetchWeatherData,
   fetchExtendedForecastData,
   fetchCurrentLocation,
-  fetchPhoto,
   fetchPhotoRef,
 } from "./api/weather";
 import sunsetSvg from "./img/sunset.svg";
@@ -22,6 +25,7 @@ import humiditySvg from "./img/humidity.gif";
 import WeatherSvg from "./Components/WeatherSvg";
 import { WeekCard } from "./Components/WeekCard";
 import PlacesAutocomplete from "react-places-autocomplete";
+import React from "react";
 
 function App() {
   const [city, setCity] = useState("Linz, Austria");
@@ -39,7 +43,7 @@ function App() {
   const [humidity, setHumidity] = useState("15");
   const [visibility, setVisibility] = useState("5.2");
   const [airQuality, setAirQuality] = useState("82");
-  const [dir, setDir] = useState("Direction: 25 (NNE)");
+  const [dir, setDir] = useState("Direction: 25° (NNE)");
   const [code, setCode] = useState("116");
   const [value, setValue] = useState("");
 
@@ -97,6 +101,8 @@ function App() {
   const [currentCity, setCurrentCity] = useState("");
   const [village, setVillage] = useState("");
 
+  const [savedCities, setSavedCities] = useState([""]);
+
   let time = new Date().toLocaleTimeString([], {
     hour: "2-digit",
     hour12: false,
@@ -109,8 +115,6 @@ function App() {
 
   const getInfo = (city: string) => {
     fetchPhotoRef(city).then(async (response) => {
-      console.log(response.data);
-      console.log(response.data.candidates[0].photos[0].photo_reference);
       const photoRef = response.data.candidates[0].photos[0].photo_reference;
       const imageLookupURL = `https://maps.googleapis.com/maps/api/place/photo?photoreference=${photoRef}&key=${process.env.REACT_APP_API_PHOTOS_KEY}&maxwidth=700&maxheight=700`;
       const imageURLQuery = await fetch(imageLookupURL)
@@ -137,7 +141,7 @@ function App() {
       setDir(
         "Direction: " +
           data.current_condition[0].winddirDegree +
-          "( " +
+          "° ( " +
           data.current_condition[0].winddir16Point +
           ")"
       );
@@ -238,10 +242,6 @@ function App() {
 
   const showPosition = (position: any) => {
     var crd = position.coords;
-    console.log("Your current position is:");
-    console.log(`Latitude : ${crd.latitude}`);
-    console.log(`Longitude: ${crd.longitude}`);
-    console.log(`More or less ${crd.accuracy} meters.`);
     fetchCurrentLocation(crd.latitude, crd.longitude).then((response) => {
       setCountry(response.data.results[0].components.country);
       setCurrentCity(response.data.results[0].components.city);
@@ -249,7 +249,6 @@ function App() {
       setVillage(response.data.results[0].components.village);
       console.log(response.data.results[0].components.country);
       const currCity = [village, town, currentCity, country];
-      console.log(currCity.join(", "));
       getInfo(currCity.join(", "));
     });
   };
@@ -265,21 +264,89 @@ function App() {
     }
   };
 
+  const useStyles = makeStyles((theme) => ({
+    modal: {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    Back: {
+      padding: theme.spacing(2, 4, 3),
+      color: "white",
+      background: "#777777 0% 0% no-repeat padding-box",
+      opacity: "1",
+    },
+    Data: {
+      color: "white",
+      background: "#777777 0% 0% no-repeat padding-box",
+      opacity: "1",
+    },
+  }));
+
+  const classes = useStyles();
+  const [open, setOpen] = React.useState(false);
+
+  const handleOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
+
+  const addToSaved = (city: string) => {
+    setSavedCities([...savedCities, city]);
+    console.log(savedCities);
+  };
+
+  const showSaved = (city: string) => {
+    getInfo(city);
+  };
+
   return (
     <div className="App">
       <header className="Header">
         <span>
-          <p id="Menu">
+          <p id="Menu" onClick={handleOpen}>
             <FavoriteBorderIcon />
             &nbsp;&nbsp;
-            <span>Favorites</span>
+            <span>Saved</span>
           </p>
         </span>
+        <Modal
+          aria-labelledby="transition-modal-title"
+          aria-describedby="transition-modal-description"
+          className={classes.modal}
+          open={open}
+          onClose={handleClose}
+          closeAfterTransition
+          BackdropComponent={Backdrop}
+          BackdropProps={{
+            timeout: 500,
+          }}
+        >
+          <Fade in={open}>
+            <div className={classes.Back}>
+              <h2 id="transition-modal-title">Saved cities</h2>
+              {savedCities.map((v) => (
+                <div
+                  className={classes.Data}
+                  key={v}
+                  onClick={() => {
+                    showSaved(v);
+                  }}
+                >
+                  <h3>{v}</h3>
+                </div>
+              ))}
+            </div>
+          </Fade>
+        </Modal>
         <div className="FullSearchDiv">
           {" "}
           <span>
             <GpsFixedIcon
-              style={{ fontSize: 30, float: "left", paddingTop: "3%" }}
+              id="GpsFixedIcon"
               onClick={() => {
                 if (navigator.geolocation) {
                   navigator.geolocation.getCurrentPosition(showPosition);
@@ -399,6 +466,9 @@ function App() {
               right: "0",
               float: "right",
               position: "absolute",
+            }}
+            onClick={() => {
+              addToSaved(city);
             }}
           />
         </div>
@@ -639,6 +709,3 @@ function App() {
 }
 
 export default App;
-function initalState(initalState: any): [any, any] {
-  throw new Error("Function not implemented.");
-}
