@@ -19,6 +19,7 @@ import airqSvg from "./img/airq.svg";
 import humiditySvg from "./img/humidity.gif";
 import WeatherSvg from "./Components/WeatherSvg";
 import { WeekCard } from "./Components/WeekCard";
+import PlacesAutocomplete from "react-places-autocomplete";
 
 function App() {
   const [city, setCity] = useState("Linz, Austria");
@@ -37,6 +38,7 @@ function App() {
   const [airQuality, setAirQuality] = useState("82");
   const [dir, setDir] = useState("Direction: 25 (NNE)");
   const [code, setCode] = useState("116");
+  const [value, setValue] = useState("");
 
   const [firstDate, setFirstDate] = useState("");
   const [firstID, setFirstID] = useState("");
@@ -97,8 +99,8 @@ function App() {
     weekday: "long",
   });
 
-  const getInfo = () => {
-    fetchWeatherData("Linz").then((response) => {
+  const getInfo = (city: string) => {
+    fetchWeatherData(city).then((response) => {
       let data = response.data.data;
       setCity(data.request[0].query);
       setTemperature(data.current_condition[0].temp_C);
@@ -122,7 +124,7 @@ function App() {
       setCode(response.data.data.weather[0].hourly[0].weatherCode);
     });
 
-    fetchExtendedForecastData("Linz").then((response) => {
+    fetchExtendedForecastData(city).then((response) => {
       let data = response.data.data;
       setFirstDate(data.weather[1].date);
       setFirstMax(data.weather[1].maxtempC);
@@ -172,9 +174,6 @@ function App() {
       setSeventhMaxF(data.weather[7].maxtempF);
       setSeventhMinF(data.weather[7].mintempF);
       setSeventhID(data.weather[7].hourly[0].weatherCode);
-    });
-    fetchPhoto("Linz").then((response) => {
-      console.log(response);
     });
   };
 
@@ -239,22 +238,70 @@ function App() {
             <span>Favorites</span>
           </p>
         </span>
-        <span>
-          <GpsFixedIcon
-            style={{ fontSize: 40 }}
-            onClick={() => {
-              if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(showPosition);
-                alert("Geolocation is supported by this browser.");
-              } else {
-                alert("Geolocation is not supported by this browser.");
-              }
-            }}
-          />
-          <input type="text" id="Search" name="search" />
-
-          <button onClick={getInfo}>Get</button>
-        </span>
+        <div className="FullSearchDiv">
+          {" "}
+          <span>
+            <GpsFixedIcon
+              style={{ fontSize: 30, float: "left", paddingTop: "3%" }}
+              onClick={() => {
+                if (navigator.geolocation) {
+                  navigator.geolocation.getCurrentPosition(showPosition);
+                  alert("Geolocation is supported by this browser.");
+                } else {
+                  alert("Geolocation is not supported by this browser.");
+                }
+              }}
+            />{" "}
+          </span>
+          <span>
+            <div className="SearchInputDiv">
+              <PlacesAutocomplete
+                value={value}
+                onChange={setValue}
+                onSelect={(value) => {
+                  getInfo(value);
+                }}
+              >
+                {({
+                  getInputProps,
+                  suggestions,
+                  getSuggestionItemProps,
+                  loading,
+                }) => (
+                  <div>
+                    <input
+                      {...getInputProps({
+                        placeholder: "Search Places ...",
+                        className: "location-search-input",
+                      })}
+                    />
+                    <div className="autocomplete-dropdown-container">
+                      {loading && <div>Loading...</div>}
+                      {suggestions.map((suggestion) => {
+                        const className = suggestion.active
+                          ? "suggestion-item--active"
+                          : "suggestion-item";
+                        const style = suggestion.active
+                          ? { backgroundColor: "#707070", cursor: "pointer" }
+                          : { backgroundColor: "#606060", cursor: "pointer" };
+                        return (
+                          <div
+                            {...getSuggestionItemProps(suggestion, {
+                              className,
+                              style,
+                            })}
+                          >
+                            <span>{suggestion.description}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </PlacesAutocomplete>
+            </div>
+          </span>
+        </div>
         <span>
           <button
             id="TempBtnF"
