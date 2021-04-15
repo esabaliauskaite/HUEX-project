@@ -8,6 +8,8 @@ import {
   fetchWeatherData,
   fetchExtendedForecastData,
   fetchCurrentLocation,
+  fetchPhoto,
+  fetchPhotoRef,
 } from "./api/weather";
 import sunsetSvg from "./img/sunset.svg";
 import sunriseSvg from "./img/sunrise.svg";
@@ -24,6 +26,7 @@ import PlacesAutocomplete from "react-places-autocomplete";
 function App() {
   const [city, setCity] = useState("Linz, Austria");
   const [temperature, setTemperature] = useState("10");
+  const [img, setImg] = useState("");
   const [temperatureF, setTemperatureF] = useState("50");
   const [showTemperature, setShowTemperature] = useState(true);
   const [showWeek, setShowWeek] = useState(false);
@@ -105,6 +108,18 @@ function App() {
   });
 
   const getInfo = (city: string) => {
+    fetchPhotoRef(city).then(async (response) => {
+      console.log(response.data);
+      console.log(response.data.candidates[0].photos[0].photo_reference);
+      const photoRef = response.data.candidates[0].photos[0].photo_reference;
+      const imageLookupURL = `https://maps.googleapis.com/maps/api/place/photo?photoreference=${photoRef}&key=${process.env.REACT_APP_API_PHOTOS_KEY}&maxwidth=700&maxheight=700`;
+      const imageURLQuery = await fetch(imageLookupURL)
+        .then((r) => r.blob())
+        .catch(console.error);
+      const image = URL.createObjectURL(imageURLQuery);
+      setImg(image);
+    });
+
     fetchWeatherData(city).then((response) => {
       let data = response.data.data;
       setCity(data.request[0].query);
@@ -238,6 +253,7 @@ function App() {
       getInfo(currCity.join(", "));
     });
   };
+
   const descVisibility = () => {
     const value = parseFloat(visibility);
     if (value > 1) {
@@ -373,7 +389,7 @@ function App() {
           <p className="Rain">Rain - {chanceOfRain} %</p>
         </div>
 
-        <div className="CityDiv">
+        <div className="CityDiv" style={{ backgroundImage: `url(${img})` }}>
           <p className="City">{city}</p>
           <FavoriteIcon
             style={{
@@ -623,3 +639,6 @@ function App() {
 }
 
 export default App;
+function initalState(initalState: any): [any, any] {
+  throw new Error("Function not implemented.");
+}
