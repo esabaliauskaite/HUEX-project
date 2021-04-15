@@ -7,7 +7,7 @@ import FavoriteIcon from "@material-ui/icons/Favorite";
 import {
   fetchWeatherData,
   fetchExtendedForecastData,
-  fetchPhoto,
+  fetchCurrentLocation,
 } from "./api/weather";
 import sunsetSvg from "./img/sunset.svg";
 import sunriseSvg from "./img/sunrise.svg";
@@ -88,6 +88,11 @@ function App() {
   const [seventhMin, setSeventhMin] = useState("");
   const [seventhMaxF, setSeventhMaxF] = useState("");
   const [seventhMinF, setSeventhMinF] = useState("");
+
+  const [country, setCountry] = useState("");
+  const [town, setTown] = useState("");
+  const [currentCity, setCurrentCity] = useState("");
+  const [village, setVillage] = useState("");
 
   let time = new Date().toLocaleTimeString([], {
     hour: "2-digit",
@@ -216,7 +221,23 @@ function App() {
     }
   };
 
-  const showPosition = (position: any) => {};
+  const showPosition = (position: any) => {
+    var crd = position.coords;
+    console.log("Your current position is:");
+    console.log(`Latitude : ${crd.latitude}`);
+    console.log(`Longitude: ${crd.longitude}`);
+    console.log(`More or less ${crd.accuracy} meters.`);
+    fetchCurrentLocation(crd.latitude, crd.longitude).then((response) => {
+      setCountry(response.data.results[0].components.country);
+      setCurrentCity(response.data.results[0].components.city);
+      setTown(response.data.results[0].components.town);
+      setVillage(response.data.results[0].components.village);
+      console.log(response.data.results[0].components.country);
+      const currCity = [village, town, currentCity, country];
+      console.log(currCity.join(", "));
+      getInfo(currCity.join(", "));
+    });
+  };
   const descVisibility = () => {
     const value = parseFloat(visibility);
     if (value > 1) {
@@ -246,7 +267,6 @@ function App() {
               onClick={() => {
                 if (navigator.geolocation) {
                   navigator.geolocation.getCurrentPosition(showPosition);
-                  alert("Geolocation is supported by this browser.");
                 } else {
                   alert("Geolocation is not supported by this browser.");
                 }
