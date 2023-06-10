@@ -15,3 +15,17 @@ Google Places API for getting photos according to the city.
 # UI interface
 ![Web 1920 – 1](https://user-images.githubusercontent.com/56506266/113591225-ec7c4e00-9633-11eb-8dec-9a5be567626c.jpg)
 ![Web 1920 – 9](https://user-images.githubusercontent.com/56506266/113591250-f30ac580-9633-11eb-9fde-decb0fe6045e.jpg)
+
+## Available Scripts
+
+In the project directory, you can run:
+
+### `npm start`
+
+Runs the app in the development mode.\
+Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+
+### `npm run build`
+
+Builds the app for production to the `build` folder.\
+It correctly bundles React in production mode and optimizes the build for the best performance.
